@@ -1174,7 +1174,7 @@ func (e *Endpoint) setDatapathMapIDAndPinMap(id int) error {
 
 // GetState returns the endpoint's state
 // endpoint.Mutex may only be.RLockAlive()ed
-func (e *Endpoint) GetStateLocked() string {
+func (e *Endpoint) getState() string {
 	return e.state
 }
 
@@ -1183,7 +1183,7 @@ func (e *Endpoint) GetStateLocked() string {
 func (e *Endpoint) GetState() string {
 	e.UnconditionalRLock()
 	defer e.RUnlock()
-	return e.GetStateLocked()
+	return e.getState()
 }
 
 // SetStateLocked modifies the endpoint's state
@@ -1608,7 +1608,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 
 	if e.SecurityIdentity != nil && e.SecurityIdentity.Labels.Equals(newLabels) {
 		// Sets endpoint state to ready if was waiting for identity
-		if e.GetStateLocked() == StateWaitingForIdentity {
+		if e.getState() == StateWaitingForIdentity {
 			e.SetStateLocked(StateReady, "Set identity for this endpoint")
 		}
 		e.RUnlock()
@@ -2052,7 +2052,7 @@ func (e *Endpoint) CreateEndpoint(ctx context.Context, cfunc ContainerStartFunc,
 		return fmt.Errorf("endpoint was deleted while processing the request")
 	}
 
-	build := e.GetStateLocked() == StateReady
+	build := e.getState() == StateReady
 	if build {
 		e.SetStateLocked(StateWaitingToRegenerate, "Identity is known at endpoint creation time")
 	}
