@@ -4,6 +4,8 @@ import (
 	"github.com/cilium/cilium/common/addressing"
 	"github.com/cilium/cilium/pkg/endpoint/regeneration"
 	"github.com/cilium/cilium/pkg/identity"
+
+	. "gopkg.in/check.v1"
 )
 
 // PrepareEndpointForTesting creates an endpoint useful for testing purposes.
@@ -17,4 +19,13 @@ func PrepareEndpointForTesting(owner regeneration.Owner, id uint16, identity *id
 	e.SetStateLocked(StateWaitingToRegenerate, "test")
 	e.Unlock()
 	return e
+}
+
+func (e *Endpoint) RegenerateEndpointTest(c *C, regenMetadata *regeneration.ExternalRegenerationMetadata) {
+	e.UnconditionalLock()
+	ready := e.SetStateLocked(StateWaitingToRegenerate, "test")
+	e.Unlock()
+	c.Assert(ready, Equals, true)
+	buildSuccess := <-e.Regenerate(regenMetadata)
+	c.Assert(buildSuccess, Equals, true)
 }
