@@ -16,8 +16,8 @@ package endpoint
 
 import "fmt"
 
-// LockAlive returns error if endpoint was removed, locks underlying mutex otherwise
-func (e *Endpoint) LockAlive() error {
+// lockAlive returns error if endpoint was removed, locks underlying mutex otherwise
+func (e *Endpoint) lockAlive() error {
 	e.mutex.Lock()
 	if e.IsDisconnecting() {
 		e.mutex.Unlock()

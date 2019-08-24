@@ -816,7 +816,7 @@ func (e *Endpoint) Update(cfg *models.EndpointConfigurationSpec) error {
 		return UpdateValidationError{err.Error()}
 	}
 
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		return err
 	}
 
@@ -860,7 +860,7 @@ func (e *Endpoint) Update(cfg *models.EndpointConfigurationSpec) error {
 		for {
 			select {
 			case <-ticker.C:
-				if err := e.LockAlive(); err != nil {
+				if err := e.lockAlive(); err != nil {
 					return err
 				}
 				// Check endpoint state before attempting configuration update because
@@ -1464,7 +1464,7 @@ func (e *Endpoint) getIDandLabels() string {
 // endpoint will receive a new identity and will be regenerated. Both of these
 // operations will happen in the background.
 func (e *Endpoint) ModifyIdentityLabels(addLabels, delLabels pkgLabels.Labels) error {
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		return err
 	}
 
@@ -1514,7 +1514,7 @@ func (e *Endpoint) UpdateLabels(ctx context.Context, identityLabels, infoLabels 
 		logfields.InfoLabels:     infoLabels.String(),
 	}).Debug("Refreshing labels of endpoint")
 
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		e.LogDisconnectedMutexAction(err, "when trying to refresh endpoint labels")
 		return
 	}
@@ -1647,7 +1647,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 		}
 	}
 
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		releaseNewlyAllocatedIdentity()
 		return err
 	}
@@ -1679,7 +1679,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 			elog.Debugf("Applying grace period before regeneration due to identity change")
 			time.Sleep(option.Config.IdentityChangeGracePeriod)
 
-			if err := e.LockAlive(); err != nil {
+			if err := e.lockAlive(); err != nil {
 				releaseNewlyAllocatedIdentity()
 				return err
 			}
@@ -1736,7 +1736,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 // SetPolicyRevision sets the endpoint's policy revision with the given
 // revision.
 func (e *Endpoint) SetPolicyRevision(rev uint64) {
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		return
 	}
 	e.setPolicyRevision(rev)
@@ -1859,7 +1859,7 @@ func (e *Endpoint) IsDisconnecting() bool {
 // PinDatapathMap retrieves a file descriptor from the map ID from the API call
 // and pins the corresponding map into the BPF file system.
 func (e *Endpoint) PinDatapathMap() error {
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		return err
 	}
 	defer e.Unlock()
@@ -1892,7 +1892,7 @@ func (e *Endpoint) syncEndpointHeaderFile(reasons []string) {
 	e.buildMutex.Lock()
 	defer e.buildMutex.Unlock()
 
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		// endpoint was removed in the meanwhile, return
 		return
 	}
@@ -1908,7 +1908,7 @@ func (e *Endpoint) syncEndpointHeaderFile(reasons []string) {
 // SyncEndpointHeaderFile it bumps the current DNS History information for the
 // endpoint in the lxc_config.h file.
 func (e *Endpoint) SyncEndpointHeaderFile() error {
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		// endpoint was removed in the meanwhile, return
 		return nil
 	}
@@ -1973,7 +1973,7 @@ func (e *Endpoint) Delete(monitor monitorOwner, ipam ipReleaser, manager endpoin
 	// requests have been enqueued, have all of them except the first
 	// return here. Ignore the request if the endpoint is already
 	// disconnected.
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		return []error{}
 	}
 	e.SetStateLocked(StateDisconnecting, "Deleting endpoint")
@@ -2048,7 +2048,7 @@ func (e *Endpoint) GetProxyInfoByFields() (uint64, string, string, []string, str
 type ContainerStartFunc func()
 
 func (e *Endpoint) CreateEndpoint(ctx context.Context, cfunc ContainerStartFunc, syncBuild bool) error {
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		return fmt.Errorf("endpoint was deleted while processing the request")
 	}
 

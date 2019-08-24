@@ -450,7 +450,7 @@ func (e *Endpoint) ProcessChangeRequest(newEp *Endpoint, validPatchTransitionSta
 		reason  string
 	)
 
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		return "", err
 	}
 	defer e.Unlock()

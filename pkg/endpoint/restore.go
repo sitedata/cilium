@@ -169,7 +169,7 @@ func (e *Endpoint) restoreIdentity() error {
 		}
 	}
 
-	if err := e.LockAlive(); err != nil {
+	if err := e.lockAlive(); err != nil {
 		scopedLog.Warn("Endpoint to restore has been deleted")
 		return err
 	}
