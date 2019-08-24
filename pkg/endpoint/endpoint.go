@@ -305,9 +305,9 @@ func (e *Endpoint) closeBPFProgramChannel() {
 	}
 }
 
-// HasBPFProgram returns whether a BPF program has been generated for this
+// bpfProgramInstalled returns whether a BPF program has been generated for this
 // endpoint.
-func (e *Endpoint) HasBPFProgram() bool {
+func (e *Endpoint) bpfProgramInstalled() bool {
 	select {
 	case <-e.hasBPFProgram:
 		return true
@@ -2127,7 +2127,7 @@ func (e *Endpoint) CreateEndpoint(ctx context.Context, cfunc ContainerStartFunc,
 			}
 			hasSidecarProxy := e.HasSidecarProxy()
 			e.RUnlock()
-			if hasSidecarProxy && e.HasBPFProgram() {
+			if hasSidecarProxy && e.bpfProgramInstalled() {
 				// If the endpoint is determined to have a sidecar proxy,
 				// return immediately to let the sidecar container start,
 				// in case it is required to enforce L7 rules.
