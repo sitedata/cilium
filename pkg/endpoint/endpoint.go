@@ -194,7 +194,7 @@ type Endpoint struct {
 	// sure that restores when DNS policy is in there are correct
 	dnsHistoryTrigger *trigger.Trigger
 
-	// state is the state the endpoint is in. See SetStateLocked()
+	// state is the state the endpoint is in. See setState()
 	state string
 
 	// bpfHeaderfileHash is the hash of the last BPF headerfile that has been
@@ -731,7 +731,7 @@ func parseEndpoint(owner regeneration.Owner, strEp string) (*Endpoint, error) {
 
 	ep.UpdateLogger(nil)
 
-	ep.SetStateLocked(StateRestoring, "Endpoint restoring")
+	ep.setState(StateRestoring, "Endpoint restoring")
 
 	return &ep, nil
 }
@@ -860,7 +860,7 @@ func (e *Endpoint) Update(cfg *models.EndpointConfigurationSpec) error {
 				// Check endpoint state before attempting configuration update because
 				// configuration updates can only be applied when the endpoint is in
 				// specific states. See GH-3058.
-				stateTransitionSucceeded := e.SetStateLocked(StateWaitingToRegenerate, regenCtx.Reason)
+				stateTransitionSucceeded := e.setState(StateWaitingToRegenerate, regenCtx.Reason)
 				if stateTransitionSucceeded {
 					e.Unlock()
 					e.Regenerate(regenCtx)
@@ -1004,7 +1004,7 @@ func (e *Endpoint) leaveLocked(proxyWaitGroup *completion.WaitGroup, conf Delete
 		e.scrubIPsInConntrackTableLocked()
 	}
 
-	e.SetStateLocked(StateDisconnected, "Endpoint removed")
+	e.setState(StateDisconnected, "Endpoint removed")
 
 	endpointPolicyStatus.Remove(e.ID)
 	e.getLogger().Info("Removed endpoint")
@@ -1186,10 +1186,10 @@ func (e *Endpoint) GetState() string {
 	return e.getState()
 }
 
-// SetStateLocked modifies the endpoint's state
+// setState modifies the endpoint's state
 // endpoint.Mutex must be held
 // Returns true only if endpoints state was changed as requested
-func (e *Endpoint) SetStateLocked(toState, reason string) bool {
+func (e *Endpoint) setState(toState, reason string) bool {
 	// Validate the state transition.
 	fromState := e.state
 
@@ -1479,7 +1479,7 @@ func (e *Endpoint) ModifyIdentityLabels(addLabels, delLabels pkgLabels.Labels) e
 		// Mark with StateWaitingForIdentity, it will be set to
 		// StateWaitingToRegenerate after the identity resolution has been
 		// completed
-		e.SetStateLocked(StateWaitingForIdentity, "Triggering identity resolution due to updated identity labels")
+		e.setState(StateWaitingForIdentity, "Triggering identity resolution due to updated identity labels")
 
 		e.identityRevision++
 		rev = e.identityRevision
@@ -1609,7 +1609,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 	if e.SecurityIdentity != nil && e.SecurityIdentity.Labels.Equals(newLabels) {
 		// Sets endpoint state to ready if was waiting for identity
 		if e.getState() == StateWaitingForIdentity {
-			e.SetStateLocked(StateReady, "Set identity for this endpoint")
+			e.setState(StateReady, "Set identity for this endpoint")
 		}
 		e.RUnlock()
 		elog.Debug("Endpoint labels unchanged, skipping resolution of identity")
@@ -1717,7 +1717,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 	// called, the controller calling identityLabelsChanged() will trigger
 	// the regeneration as soon as the identity is known.
 	if e.ID != 0 {
-		readyToRegenerate = e.SetStateLocked(StateWaitingToRegenerate, "Triggering regeneration due to new identity")
+		readyToRegenerate = e.setState(StateWaitingToRegenerate, "Triggering regeneration due to new identity")
 	}
 
 	// Unconditionally force policy recomputation after a new identity has been
@@ -1976,7 +1976,7 @@ func (e *Endpoint) Delete(monitor monitorOwner, ipam ipReleaser, manager endpoin
 	if err := e.lockAlive(); err != nil {
 		return []error{}
 	}
-	e.SetStateLocked(StateDisconnecting, "Deleting endpoint")
+	e.setState(StateDisconnecting, "Deleting endpoint")
 
 	// Remove the endpoint before we clean up. This ensures it is no longer
 	// listed or queued for rebuilds.
@@ -2054,7 +2054,7 @@ func (e *Endpoint) CreateEndpoint(ctx context.Context, cfunc ContainerStartFunc,
 
 	build := e.getState() == StateReady
 	if build {
-		e.SetStateLocked(StateWaitingToRegenerate, "Identity is known at endpoint creation time")
+		e.setState(StateWaitingToRegenerate, "Identity is known at endpoint creation time")
 	}
 	e.Unlock()
 
