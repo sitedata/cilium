@@ -1,6 +1,8 @@
 package endpoint
 
 import (
+	"time"
+
 	"github.com/cilium/cilium/common/addressing"
 	"github.com/cilium/cilium/pkg/endpoint/regeneration"
 	"github.com/cilium/cilium/pkg/identity"
@@ -28,4 +30,25 @@ func (e *Endpoint) RegenerateEndpointTest(c *C, regenMetadata *regeneration.Exte
 	c.Assert(ready, Equals, true)
 	buildSuccess := <-e.Regenerate(regenMetadata)
 	c.Assert(buildSuccess, Equals, true)
+}
+
+func (e *Endpoint) WaitForIdentity(timeoutDuration time.Duration) *identity.Identity {
+	timeout := time.NewTimer(timeoutDuration)
+	defer timeout.Stop()
+	tick := time.NewTicker(200 * time.Millisecond)
+	defer tick.Stop()
+	var secID *identity.Identity
+	for {
+		select {
+		case <-timeout.C:
+			return nil
+		case <-tick.C:
+			e.UnconditionalRLock()
+			secID = e.SecurityIdentity
+			e.RUnlock()
+			if secID != nil {
+				return secID
+			}
+		}
+	}
 }
