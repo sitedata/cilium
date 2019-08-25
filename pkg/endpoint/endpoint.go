@@ -429,7 +429,7 @@ func (e *Endpoint) GetLabels() []string {
 // GetSecurityIdentity returns the security identity of the endpoint. It assumes
 // the endpoint's mutex is held.
 func (e *Endpoint) GetSecurityIdentity() (*identityPkg.Identity, error) {
-	if err := e.RLockAlive(); err != nil {
+	if err := e.rLockAlive(); err != nil {
 		return nil, err
 	}
 	defer e.RUnlock()
@@ -1172,13 +1172,13 @@ func (e *Endpoint) setDatapathMapIDAndPinMap(id int) error {
 }
 
 // GetState returns the endpoint's state
-// endpoint.Mutex may only be.RLockAlive()ed
+// endpoint.Mutex may only be.rLockAlive()ed
 func (e *Endpoint) getState() string {
 	return e.state
 }
 
 // GetState returns the endpoint's state
-// endpoint.Mutex may only be.RLockAlive()ed
+// endpoint.Mutex may only be.rLockAlive()ed
 func (e *Endpoint) GetState() string {
 	e.UnconditionalRLock()
 	defer e.RUnlock()
@@ -1539,7 +1539,7 @@ func (e *Endpoint) identityResolutionIsObsolete(myChangeRev int) bool {
 
 // Must be called with e.Mutex NOT held.
 func (e *Endpoint) runLabelsResolver(ctx context.Context, myChangeRev int, blocking bool) {
-	if err := e.RLockAlive(); err != nil {
+	if err := e.rLockAlive(); err != nil {
 		// If a labels update and an endpoint delete API request arrive
 		// in quick succession, this could occur; in that case, there's
 		// no point updating the controller.
@@ -1589,7 +1589,7 @@ func (e *Endpoint) runLabelsResolver(ctx context.Context, myChangeRev int, block
 }
 
 func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) error {
-	if err := e.RLockAlive(); err != nil {
+	if err := e.rLockAlive(); err != nil {
 		return ErrNotAlive
 	}
 	newLabels := e.OpLabels.IdentityLabels()
@@ -2130,7 +2130,7 @@ func (e *Endpoint) CreateEndpoint(ctx context.Context, mgr endpointManager, cfun
 
 		case <-ctx.Done():
 		case <-ticker.C:
-			if err := e.RLockAlive(); err != nil {
+			if err := e.rLockAlive(); err != nil {
 				return fmt.Errorf("endpoint was deleted while waiting for initial endpoint generation to complete")
 			}
 			hasSidecarProxy := e.HasSidecarProxy()
@@ -2236,7 +2236,7 @@ type proxyInfo interface {
 }
 
 func (e *Endpoint) GetProxyInfo(info proxyInfo) error {
-	if err := e.RLockAlive(); err != nil {
+	if err := e.rLockAlive(); err != nil {
 		e.LogDisconnectedMutexAction(err, "getting proxy info")
 		return err
 	}

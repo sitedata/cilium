@@ -544,7 +544,7 @@ func (e *Endpoint) runIPIdentitySync(endpointIP addressing.CiliumIP) {
 	e.controllers.UpdateController(fmt.Sprintf("sync-%s-identity-mapping (%d)", addressFamily, e.ID),
 		controller.ControllerParams{
 			DoFunc: func(ctx context.Context) error {
-				if err := e.RLockAlive(); err != nil {
+				if err := e.rLockAlive(); err != nil {
 					return controller.NewExitReason("Endpoint disappeared")
 				}
 

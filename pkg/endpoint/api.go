@@ -38,7 +38,7 @@ import (
 // GetLabelsModel returns the labels of the endpoint in their representation
 // for the Cilium API. Returns an error if the Endpoint is being deleted.
 func (e *Endpoint) GetLabelsModel() (*models.LabelConfiguration, error) {
-	if err := e.RLockAlive(); err != nil {
+	if err := e.rLockAlive(); err != nil {
 		return nil, err
 	}
 	spec := &models.LabelConfigurationSpec{
@@ -568,7 +568,7 @@ func (e *Endpoint) GetConfigurationStatus() *models.EndpointConfigurationStatus 
 // provided labels. Returns labels that were added and deleted. Returns an
 // error if the endpoint is being deleted.
 func (e *Endpoint) ApplyUserLabelChanges(lbls labels.Labels) (add, del labels.Labels, err error) {
-	if err := e.RLockAlive(); err != nil {
+	if err := e.rLockAlive(); err != nil {
 		return nil, nil, err
 	}
 	defer e.RUnlock()

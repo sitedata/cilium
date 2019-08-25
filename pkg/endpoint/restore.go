@@ -133,7 +133,7 @@ func (e *Endpoint) RegenerateAfterRestore() error {
 }
 
 func (e *Endpoint) restoreIdentity() error {
-	if err := e.RLockAlive(); err != nil {
+	if err := e.rLockAlive(); err != nil {
 		e.LogDisconnectedMutexAction(err, "before filtering labels during regenerating restored endpoint")
 		return err
 	}

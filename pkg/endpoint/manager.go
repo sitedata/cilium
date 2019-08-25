@@ -75,7 +75,7 @@ func (e *Endpoint) Expose(mgr endpointManager) error {
 // endpoints for the given endpoint. Returns an error if the endpoint is
 // being deleted.
 func (e *Endpoint) UpdateReferences(mgr endpointManager) error {
-	if err := e.RLockAlive(); err != nil {
+	if err := e.rLockAlive(); err != nil {
 		return err
 	}
 	defer e.RUnlock()

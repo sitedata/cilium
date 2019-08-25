@@ -31,8 +31,8 @@ func (e *Endpoint) Unlock() {
 	e.mutex.Unlock()
 }
 
-// RLockAlive returns error if endpoint was removed, read locks underlying mutex otherwise
-func (e *Endpoint) RLockAlive() error {
+// rLockAlive returns error if endpoint was removed, read locks underlying mutex otherwise
+func (e *Endpoint) rLockAlive() error {
 	e.mutex.RLock()
 	if e.IsDisconnecting() {
 		e.mutex.RUnlock()
