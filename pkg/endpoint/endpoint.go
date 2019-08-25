@@ -403,7 +403,7 @@ func (e *Endpoint) GetSecurityIdentity() (*identityPkg.Identity, error) {
 	if err := e.rLockAlive(); err != nil {
 		return nil, err
 	}
-	defer e.RUnlock()
+	defer e.runlock()
 	return e.SecurityIdentity, nil
 }
 
@@ -416,7 +416,7 @@ func (e *Endpoint) GetID16() uint16 {
 // derived from k8s pod.
 func (e *Endpoint) getK8sPodLabels() pkgLabels.Labels {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 	allLabels := e.OpLabels.AllLabels()
 	if allLabels == nil {
 		return nil
@@ -447,7 +447,7 @@ func (e *Endpoint) GetLabelsSHA() string {
 // GetOpLabels returns the labels as slice
 func (e *Endpoint) GetOpLabels() []string {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 	return e.OpLabels.IdentityLabels().GetModel()
 }
 
@@ -490,7 +490,7 @@ func (e *Endpoint) HasSidecarProxy() bool {
 // global map should be used.
 func (e *Endpoint) ConntrackName() string {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 	return e.conntrackName()
 }
 
@@ -529,7 +529,7 @@ func (e *Endpoint) GetIdentity() identityPkg.NumericIdentity {
 // Allows is only used for unit testing
 func (e *Endpoint) Allows(id identityPkg.NumericIdentity) bool {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 
 	keyToLookup := policy.Key{
 		Identity:         uint32(id),
@@ -543,7 +543,7 @@ func (e *Endpoint) Allows(id identityPkg.NumericIdentity) bool {
 // String returns endpoint on a JSON format.
 func (e *Endpoint) String() string {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 	b, err := json.MarshalIndent(e, "", "  ")
 	if err != nil {
 		return err.Error()
@@ -599,7 +599,7 @@ func (e *Endpoint) SetDefaultOpts(opts *option.IntOptions) {
 // table to handle connection tracking (true), or the global table (false).
 func (e *Endpoint) ConntrackLocal() bool {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 
 	return e.ConntrackLocalLocked()
 }
@@ -853,7 +853,7 @@ func (e *Endpoint) Update(cfg *models.EndpointConfigurationSpec) error {
 // if any label in l is not in the endpoint's labels.
 func (e *Endpoint) HasLabels(l pkgLabels.Labels) bool {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 
 	return e.hasLabelsRLocked(l)
 }
@@ -995,7 +995,7 @@ func (e *Endpoint) RegenerateWait(reason string) error {
 // GetContainerName returns the name of the container for the endpoint.
 func (e *Endpoint) GetContainerName() string {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 	return e.containerName
 }
 
@@ -1011,7 +1011,7 @@ func (e *Endpoint) SetContainerName(name string) {
 func (e *Endpoint) GetK8sNamespace() string {
 	e.unconditionalRLock()
 	ns := e.K8sNamespace
-	e.RUnlock()
+	e.runlock()
 	return ns
 }
 
@@ -1038,7 +1038,7 @@ func (e *Endpoint) K8sNamespaceAndPodNameIsSet() bool {
 func (e *Endpoint) GetK8sPodName() string {
 	e.unconditionalRLock()
 	k8sPodName := e.K8sPodName
-	e.RUnlock()
+	e.runlock()
 
 	return k8sPodName
 }
@@ -1060,7 +1060,7 @@ func (e *Endpoint) getK8sNamespaceAndPodName() string {
 // GetK8sNamespaceAndPodName returns the namespace and pod name.
 func (e *Endpoint) GetK8sNamespaceAndPodName() string {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 	return e.K8sNamespace + "/" + e.K8sPodName
 }
 
@@ -1088,14 +1088,14 @@ func (e *Endpoint) SetContainerID(id string) {
 func (e *Endpoint) GetContainerID() string {
 	e.unconditionalRLock()
 	cID := e.containerID
-	e.RUnlock()
+	e.runlock()
 	return cID
 }
 
 // GetShortContainerID returns the endpoint's shortened container ID
 func (e *Endpoint) GetShortContainerID() string {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 
 	return e.getShortContainerID()
 }
@@ -1123,7 +1123,7 @@ func (e *Endpoint) SetDockerEndpointID(id string) {
 
 func (e *Endpoint) GetDockerEndpointID() string {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 	return e.dockerEndpointID
 }
 
@@ -1137,7 +1137,7 @@ func (e *Endpoint) SetDockerNetworkID(id string) {
 // GetDockerNetworkID returns the endpoint's Docker Endpoint ID
 func (e *Endpoint) GetDockerNetworkID() string {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 
 	return e.dockerNetworkID
 }
@@ -1158,7 +1158,7 @@ func (e *Endpoint) getState() string {
 // endpoint.Mutex may only be.rLockAlive()ed
 func (e *Endpoint) GetState() string {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 	return e.getState()
 }
 
@@ -1425,7 +1425,7 @@ func APICanModify(e *Endpoint) error {
 
 func (e *Endpoint) getIDandLabels() string {
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 
 	labels := ""
 	if e.SecurityIdentity != nil {
@@ -1524,7 +1524,7 @@ func (e *Endpoint) runLabelsResolver(ctx context.Context, myChangeRev int, block
 		return
 	}
 	newLabels := e.OpLabels.IdentityLabels()
-	e.RUnlock()
+	e.runlock()
 	scopedLog := e.getLogger().WithField(logfields.IdentityLabels, newLabels)
 
 	// If we are certain we can resolve the identity without accessing the KV
@@ -1577,7 +1577,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 
 	// Since we unlocked the endpoint and re-locked, the label update may already be obsolete
 	if e.identityResolutionIsObsolete(myChangeRev) {
-		e.RUnlock()
+		e.runlock()
 		elog.Debug("Endpoint identity has changed, aborting resolution routine in favour of new one")
 		return nil
 	}
@@ -1587,13 +1587,13 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 		if e.getState() == StateWaitingForIdentity {
 			e.setState(StateReady, "Set identity for this endpoint")
 		}
-		e.RUnlock()
+		e.runlock()
 		elog.Debug("Endpoint labels unchanged, skipping resolution of identity")
 		return nil
 	}
 
 	// unlock the endpoint mutex for the possibly long lasting kvstore operation
-	e.RUnlock()
+	e.runlock()
 	elog.Debug("Resolving identity for labels")
 
 	allocateCtx, cancel := context.WithTimeout(context.Background(), option.Config.KVstoreConnectivityTimeout)
@@ -2007,7 +2007,7 @@ func (e *Endpoint) GetProxyInfoByFields() (uint64, string, string, []string, str
 	// We use unconditional locking here because we explicitly handle state
 	// in which the endpoint is being deleted.
 	e.unconditionalRLock()
-	defer e.RUnlock()
+	defer e.runlock()
 	var err error
 	if e.IsDisconnecting() {
 		err = fmt.Errorf("endpoint is in the process of being deleted")
@@ -2110,7 +2110,7 @@ func (e *Endpoint) CreateEndpoint(ctx context.Context, mgr endpointManager, cfun
 				return fmt.Errorf("endpoint was deleted while waiting for initial endpoint generation to complete")
 			}
 			hasSidecarProxy := e.HasSidecarProxy()
-			e.RUnlock()
+			e.runlock()
 			if hasSidecarProxy && e.bpfProgramInstalled() {
 				// If the endpoint is determined to have a sidecar proxy,
 				// return immediately to let the sidecar container start,
@@ -2222,7 +2222,7 @@ func (e *Endpoint) GetProxyInfo(info proxyInfo) error {
 	info.FillLabels(e.GetLabels())
 	info.FillLabelsSHA256(e.GetLabelsSHA())
 
-	e.RUnlock()
+	e.runlock()
 	return nil
 }
 

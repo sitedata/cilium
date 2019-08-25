@@ -41,8 +41,8 @@ func (e *Endpoint) rLockAlive() error {
 	return nil
 }
 
-// RUnlock read unlocks endpoint mutex
-func (e *Endpoint) RUnlock() {
+// runlock read unlocks endpoint mutex
+func (e *Endpoint) runlock() {
 	e.mutex.RUnlock()
 }
 

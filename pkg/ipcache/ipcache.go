@@ -94,7 +94,7 @@ func (ipc *IPCache) RLock() {
 	ipc.mutex.RLock()
 }
 
-// RUnlock RUnlocks the IPCache's mutex.
+// runlock RUnlocks the IPCache's mutex.
 func (ipc *IPCache) RUnlock() {
 	ipc.mutex.RUnlock()
 }
