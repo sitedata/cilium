@@ -84,7 +84,7 @@ func (ipc *IPCache) Lock() {
 	ipc.mutex.Lock()
 }
 
-// Unlock unlocks the IPCache's mutex.
+// unlock unlocks the IPCache's mutex.
 func (ipc *IPCache) Unlock() {
 	ipc.mutex.Unlock()
 }
@@ -112,7 +112,7 @@ func (ipc *IPCache) AddListener(listener IPIdentityMappingListener) {
 	// modifying the listeners slice.
 	ipc.mutex.Lock()
 	ipc.listeners = append(ipc.listeners, listener)
-	// We will release the semaphore mutex with UnlockToRLock, *and not Unlock*
+	// We will release the semaphore mutex with UnlockToRLock, *and not unlock*
 	// because want to prevent a race across an Upsert or Delete. By doing this
 	// we are sure no other writers are performing any operation while we are
 	// still reading.

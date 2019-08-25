@@ -46,14 +46,14 @@ func (s *independentSuite) TestLocalLock(c *C) {
 	id2, err := locks.lock(context.Background(), path)
 	c.Assert(err, IsNil)
 
-	// Unlock lock1, this should be a no-op
+	// unlock lock1, this should be a no-op
 	locks.unlock(path, id1)
 
 	owner, ok := locks.lockPaths[path]
 	c.Assert(ok, Equals, true)
 	c.Assert(uuid.Equal(owner.id, id2), Equals, true)
 
-	// Unlock lock2, this should be a no-op
+	// unlock lock2, this should be a no-op
 	locks.unlock(path, id2)
 }
 

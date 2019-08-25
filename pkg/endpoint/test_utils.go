@@ -17,14 +17,14 @@ func PrepareEndpointForTesting(owner regeneration.Owner, id uint16, identity *id
 
 	e.unconditionalLock()
 	e.setState(StateWaitingToRegenerate, "test")
-	e.Unlock()
+	e.unlock()
 	return e
 }
 
 func (e *Endpoint) RegenerateEndpointTest(c *C, regenMetadata *regeneration.ExternalRegenerationMetadata) {
 	e.unconditionalLock()
 	ready := e.setState(StateWaitingToRegenerate, "test")
-	e.Unlock()
+	e.unlock()
 	c.Assert(ready, Equals, true)
 	buildSuccess := <-e.Regenerate(regenMetadata)
 	c.Assert(buildSuccess, Equals, true)

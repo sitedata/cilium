@@ -131,7 +131,7 @@ type Lock struct {
 // provided itself but the path with a suffix of ".lock" appended. The lock
 // returned also contains a patch specific local Mutex which will be held.
 //
-// It is required to call Unlock() on the returned Lock to unlock
+// It is required to call unlock() on the returned Lock to unlock
 func LockPath(ctx context.Context, path string) (l *Lock, err error) {
 	id, err := kvstoreLocks.lock(ctx, path)
 	if err != nil {
@@ -157,13 +157,13 @@ func RunLockGC() {
 	kvstoreLocks.runGC()
 }
 
-// Unlock unlocks a lock
+// unlock unlocks a lock
 func (l *Lock) Unlock() error {
 	if l == nil {
 		return nil
 	}
 
-	// Unlock kvstore mutex first
+	// unlock kvstore mutex first
 	err := l.kvLock.Unlock()
 	if err != nil {
 		log.WithError(err).WithField("path", l.path).Error("Unable to unlock kvstore lock")

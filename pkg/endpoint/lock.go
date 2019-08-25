@@ -26,8 +26,8 @@ func (e *Endpoint) lockAlive() error {
 	return nil
 }
 
-// Unlock unlocks endpoint mutex
-func (e *Endpoint) Unlock() {
+// unlock unlocks endpoint mutex
+func (e *Endpoint) unlock() {
 	e.mutex.Unlock()
 }
 

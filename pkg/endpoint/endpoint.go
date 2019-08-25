@@ -708,7 +708,7 @@ func parseEndpoint(owner regeneration.Owner, strEp string) (*Endpoint, error) {
 
 func (e *Endpoint) LogStatus(typ StatusType, code StatusCode, msg string) {
 	e.unconditionalLock()
-	defer e.Unlock()
+	defer e.unlock()
 	// FIXME GH2323 instead of a mutex we could use a channel to send the status
 	// log message to a single writer?
 	e.logStatusLocked(typ, code, msg)
@@ -820,7 +820,7 @@ func (e *Endpoint) Update(cfg *models.EndpointConfigurationSpec) error {
 		ticker := time.NewTicker(1 * time.Second)
 		defer ticker.Stop()
 
-		e.Unlock()
+		e.unlock()
 		for {
 			select {
 			case <-ticker.C:
@@ -832,11 +832,11 @@ func (e *Endpoint) Update(cfg *models.EndpointConfigurationSpec) error {
 				// specific states. See GH-3058.
 				stateTransitionSucceeded := e.setState(StateWaitingToRegenerate, regenCtx.Reason)
 				if stateTransitionSucceeded {
-					e.Unlock()
+					e.unlock()
 					e.Regenerate(regenCtx)
 					return nil
 				}
-				e.Unlock()
+				e.unlock()
 			case <-timeout:
 				e.getLogger().Warning("timed out waiting for endpoint state to change")
 				return UpdateStateChangeError{fmt.Sprintf("unable to regenerate endpoint program because state transition to %s was unsuccessful; check `cilium endpoint log %d` for more information", StateWaitingToRegenerate, e.ID)}
@@ -845,7 +845,7 @@ func (e *Endpoint) Update(cfg *models.EndpointConfigurationSpec) error {
 
 	}
 
-	e.Unlock()
+	e.unlock()
 	return nil
 }
 
@@ -1003,7 +1003,7 @@ func (e *Endpoint) GetContainerName() string {
 func (e *Endpoint) SetContainerName(name string) {
 	e.unconditionalLock()
 	e.containerName = name
-	e.Unlock()
+	e.unlock()
 }
 
 // GetK8sNamespace returns the name of the pod if the endpoint represents a
@@ -1022,14 +1022,14 @@ func (e *Endpoint) SetK8sNamespace(name string) {
 	e.UpdateLogger(map[string]interface{}{
 		logfields.K8sPodName: e.GetK8sNamespaceAndPodNameLocked(),
 	})
-	e.Unlock()
+	e.unlock()
 }
 
 // K8sNamespaceAndPodNameIsSet returns true if the pod name is set
 func (e *Endpoint) K8sNamespaceAndPodNameIsSet() bool {
 	e.unconditionalLock()
 	podName := e.GetK8sNamespaceAndPodNameLocked()
-	e.Unlock()
+	e.unlock()
 	return podName != "" && podName != "/"
 }
 
@@ -1065,7 +1065,7 @@ func (e *Endpoint) SetK8sPodName(name string) {
 	e.UpdateLogger(map[string]interface{}{
 		logfields.K8sPodName: e.GetK8sNamespaceAndPodNameLocked(),
 	})
-	e.Unlock()
+	e.unlock()
 }
 
 // SetContainerID modifies the endpoint's container ID
@@ -1075,7 +1075,7 @@ func (e *Endpoint) SetContainerID(id string) {
 	e.UpdateLogger(map[string]interface{}{
 		logfields.ContainerID: e.getShortContainerID(),
 	})
-	e.Unlock()
+	e.unlock()
 }
 
 // GetContainerID returns the endpoint's container ID
@@ -1112,7 +1112,7 @@ func (e *Endpoint) getShortContainerID() string {
 func (e *Endpoint) SetDockerEndpointID(id string) {
 	e.unconditionalLock()
 	e.dockerEndpointID = id
-	e.Unlock()
+	e.unlock()
 }
 
 func (e *Endpoint) GetDockerEndpointID() string {
@@ -1125,7 +1125,7 @@ func (e *Endpoint) GetDockerEndpointID() string {
 func (e *Endpoint) SetDockerNetworkID(id string) {
 	e.unconditionalLock()
 	e.dockerNetworkID = id
-	e.Unlock()
+	e.unlock()
 }
 
 // GetDockerNetworkID returns the endpoint's Docker Endpoint ID
@@ -1330,7 +1330,7 @@ func (e *Endpoint) OnProxyPolicyUpdate(revision uint64) {
 	if revision > e.proxyPolicyRevision {
 		e.proxyPolicyRevision = revision
 	}
-	e.Unlock()
+	e.unlock()
 }
 
 // getProxyStatisticsLocked gets the ProxyStatistics for the flows with the
@@ -1440,7 +1440,7 @@ func (e *Endpoint) ModifyIdentityLabels(addLabels, delLabels pkgLabels.Labels) e
 
 	changed, err := e.OpLabels.ModifyIdentityLabels(addLabels, delLabels)
 	if err != nil {
-		e.Unlock()
+		e.unlock()
 		return err
 	}
 
@@ -1454,7 +1454,7 @@ func (e *Endpoint) ModifyIdentityLabels(addLabels, delLabels pkgLabels.Labels) e
 		e.identityRevision++
 		rev = e.identityRevision
 	}
-	e.Unlock()
+	e.unlock()
 
 	if changed {
 		e.runLabelsResolver(context.Background(), rev, false)
@@ -1492,7 +1492,7 @@ func (e *Endpoint) UpdateLabels(ctx context.Context, identityLabels, infoLabels 
 	e.replaceInformationLabels(infoLabels)
 	// replace identity labels and update the identity if labels have changed
 	rev := e.replaceIdentityLabels(identityLabels)
-	e.Unlock()
+	e.unlock()
 	if rev != 0 {
 		e.runLabelsResolver(ctx, rev, blocking)
 	}
@@ -1586,7 +1586,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 		return nil
 	}
 
-	// Unlock the endpoint mutex for the possibly long lasting kvstore operation
+	// unlock the endpoint mutex for the possibly long lasting kvstore operation
 	e.RUnlock()
 	elog.Debug("Resolving identity for labels")
 
@@ -1624,7 +1624,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 
 	// Since we unlocked the endpoint and re-locked, the label update may already be obsolete
 	if e.identityResolutionIsObsolete(myChangeRev) {
-		e.Unlock()
+		e.unlock()
 
 		releaseNewlyAllocatedIdentity()
 
@@ -1644,7 +1644,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 		// use of the identity as we want the init duration to be as
 		// short as possible.
 		if identity.ID != oldIdentity.ID && oldIdentity.ID != identityPkg.ReservedIdentityInit {
-			e.Unlock()
+			e.unlock()
 
 			elog.Debugf("Applying grace period before regeneration due to identity change")
 			time.Sleep(option.Config.IdentityChangeGracePeriod)
@@ -1656,7 +1656,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 
 			// Since we unlocked the endpoint and re-locked, the label update may already be obsolete
 			if e.identityResolutionIsObsolete(myChangeRev) {
-				e.Unlock()
+				e.unlock()
 				releaseNewlyAllocatedIdentity()
 				return nil
 			}
@@ -1694,7 +1694,7 @@ func (e *Endpoint) identityLabelsChanged(ctx context.Context, myChangeRev int) e
 	// assigned.
 	e.forcePolicyComputation()
 
-	e.Unlock()
+	e.unlock()
 
 	if readyToRegenerate {
 		e.Regenerate(&regeneration.ExternalRegenerationMetadata{Reason: "updated security labels"})
@@ -1710,7 +1710,7 @@ func (e *Endpoint) SetPolicyRevision(rev uint64) {
 		return
 	}
 	e.setPolicyRevision(rev)
-	e.Unlock()
+	e.unlock()
 }
 
 // setPolicyRevision sets the endpoint's policy revision with the given
@@ -1772,7 +1772,7 @@ type policySignal struct {
 func (e *Endpoint) WaitForPolicyRevision(ctx context.Context, rev uint64, done func(ts time.Time)) <-chan struct{} {
 	// NOTE: unconditionalLock is used here because this method handles endpoint in disconnected state on its own
 	e.unconditionalLock()
-	defer e.Unlock()
+	defer e.unlock()
 
 	if done == nil {
 		done = func(time.Time) {}
@@ -1826,7 +1826,7 @@ func (e *Endpoint) PinDatapathMap() error {
 	if err := e.lockAlive(); err != nil {
 		return err
 	}
-	defer e.Unlock()
+	defer e.unlock()
 	return e.pinDatapathMap()
 }
 
@@ -1860,7 +1860,7 @@ func (e *Endpoint) syncEndpointHeaderFile(reasons []string) {
 		// endpoint was removed in the meanwhile, return
 		return
 	}
-	defer e.Unlock()
+	defer e.unlock()
 
 	if err := e.writeHeaderfile(e.StateDirectoryPath()); err != nil {
 		e.getLogger().WithFields(logrus.Fields{
@@ -1876,7 +1876,7 @@ func (e *Endpoint) SyncEndpointHeaderFile() error {
 		// endpoint was removed in the meanwhile, return
 		return nil
 	}
-	defer e.Unlock()
+	defer e.unlock()
 
 	if e.dnsHistoryTrigger == nil {
 		t, err := trigger.NewTrigger(trigger.Parameters{
@@ -1978,7 +1978,7 @@ func (e *Endpoint) Delete(monitor monitorOwner, ipam ipReleaser, manager endpoin
 	proxyWaitGroup := completion.NewWaitGroup(completionCtx)
 
 	errs = append(errs, e.leaveLocked(proxyWaitGroup, conf)...)
-	e.Unlock()
+	e.unlock()
 
 	err := e.waitForProxyCompletions(proxyWaitGroup)
 	if err != nil {
@@ -2039,7 +2039,7 @@ func (e *Endpoint) CreateEndpoint(ctx context.Context, mgr endpointManager, cfun
 	if build {
 		e.setState(StateWaitingToRegenerate, "Identity is known at endpoint creation time")
 	}
-	e.Unlock()
+	e.unlock()
 
 	if build {
 		// Do not synchronously regenerate the endpoint when first creating it.
@@ -2222,7 +2222,7 @@ func (e *Endpoint) GetProxyInfo(info proxyInfo) error {
 
 func (e *Endpoint) SetDefaultPolicyConfiguration(restore bool) {
 	e.unconditionalLock()
-	defer e.Unlock()
+	defer e.unlock()
 
 	if restore && !option.Config.KeepConfig {
 		return
