@@ -1485,7 +1485,7 @@ func (e *Endpoint) UpdateLabels(ctx context.Context, identityLabels, infoLabels 
 	}).Debug("Refreshing labels of endpoint")
 
 	if err := e.lockAlive(); err != nil {
-		e.LogDisconnectedMutexAction(err, "when trying to refresh endpoint labels")
+		e.logDisconnectedMutexAction(err, "when trying to refresh endpoint labels")
 		return
 	}
 
@@ -2207,7 +2207,7 @@ type proxyInfo interface {
 
 func (e *Endpoint) GetProxyInfo(info proxyInfo) error {
 	if err := e.rLockAlive(); err != nil {
-		e.LogDisconnectedMutexAction(err, "getting proxy info")
+		e.logDisconnectedMutexAction(err, "getting proxy info")
 		return err
 	}
 
