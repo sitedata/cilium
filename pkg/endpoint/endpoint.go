@@ -2042,7 +2042,6 @@ type ContainerStartFunc func(*Endpoint)
 
 func (e *Endpoint) CreateEndpoint(ctx context.Context, mgr endpointManager, cfunc ContainerStartFunc, addLabels, infoLabels pkgLabels.Labels, syncBuild bool) error {
 	err := mgr.AddEndpoint(e.owner, e, "Create endpoint from API PUT")
-	//logger := ep.Logger(daemonSubsys)
 	if err != nil {
 		return fmt.Errorf("unable to insert endpoint into manager: %s", err)
 	}
