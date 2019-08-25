@@ -2225,3 +2225,27 @@ func CreationValidation(owner regeneration.Owner, mgr endpointManager, cli k8sCl
 	addLabels, infoLabels, err := ep.createLabels(cli, epTemplate.Labels)
 	return ep, addLabels, infoLabels, err
 }
+
+type proxyInfo interface {
+	FillID(id uint64)
+	FillIPv4(ipv4 string)
+	FillIPv6(ipv6 string)
+	FillLabels(lbls []string)
+	FillLabelsSHA256(sha string)
+	FillIdentity(id uint64)
+}
+
+func (e *Endpoint) GetProxyInfo(info proxyInfo) error {
+	if err := e.RLockAlive(); err != nil {
+		e.LogDisconnectedMutexAction(err, "getting proxy info")
+		return err
+	}
+
+	info.FillID(uint64(e.ID))
+	info.FillIdentity(uint64(e.GetIdentity()))
+	info.FillLabels(e.GetLabels())
+	info.FillLabelsSHA256(e.GetLabelsSHA())
+
+	e.RUnlock()
+	return nil
+}
