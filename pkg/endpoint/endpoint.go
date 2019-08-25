@@ -1020,7 +1020,7 @@ func (e *Endpoint) SetK8sNamespace(name string) {
 	e.unconditionalLock()
 	e.K8sNamespace = name
 	e.UpdateLogger(map[string]interface{}{
-		logfields.K8sPodName: e.GetK8sNamespaceAndPodNameLocked(),
+		logfields.K8sPodName: e.getK8sNamespaceAndPodName(),
 	})
 	e.unlock()
 }
@@ -1028,7 +1028,7 @@ func (e *Endpoint) SetK8sNamespace(name string) {
 // K8sNamespaceAndPodNameIsSet returns true if the pod name is set
 func (e *Endpoint) K8sNamespaceAndPodNameIsSet() bool {
 	e.unconditionalLock()
-	podName := e.GetK8sNamespaceAndPodNameLocked()
+	podName := e.getK8sNamespaceAndPodName()
 	e.unlock()
 	return podName != "" && podName != "/"
 }
@@ -1045,16 +1045,22 @@ func (e *Endpoint) GetK8sPodName() string {
 
 // HumanStringLocked returns the endpoint's most human readable identifier as string
 func (e *Endpoint) HumanStringLocked() string {
-	if pod := e.GetK8sNamespaceAndPodNameLocked(); pod != "" {
+	if pod := e.getK8sNamespaceAndPodName(); pod != "" {
 		return pod
 	}
 
 	return e.StringID()
 }
 
-// GetK8sNamespaceAndPodNameLocked returns the namespace and pod name.  This
-// function requires e.Mutex to be held.
-func (e *Endpoint) GetK8sNamespaceAndPodNameLocked() string {
+// getK8sNamespaceAndPodName returns the namespace and pod name.
+func (e *Endpoint) getK8sNamespaceAndPodName() string {
+	return e.K8sNamespace + "/" + e.K8sPodName
+}
+
+// GetK8sNamespaceAndPodName returns the namespace and pod name.
+func (e *Endpoint) GetK8sNamespaceAndPodName() string {
+	e.UnconditionalRLock()
+	defer e.RUnlock()
 	return e.K8sNamespace + "/" + e.K8sPodName
 }
 
@@ -1063,7 +1069,7 @@ func (e *Endpoint) SetK8sPodName(name string) {
 	e.unconditionalLock()
 	e.K8sPodName = name
 	e.UpdateLogger(map[string]interface{}{
-		logfields.K8sPodName: e.GetK8sNamespaceAndPodNameLocked(),
+		logfields.K8sPodName: e.getK8sNamespaceAndPodName(),
 	})
 	e.unlock()
 }
