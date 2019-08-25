@@ -15,14 +15,14 @@ func PrepareEndpointForTesting(owner regeneration.Owner, id uint16, identity *id
 	e.IPv4 = ipv4
 	e.SetIdentity(identity, true)
 
-	e.UnconditionalLock()
+	e.unconditionalLock()
 	e.setState(StateWaitingToRegenerate, "test")
 	e.Unlock()
 	return e
 }
 
 func (e *Endpoint) RegenerateEndpointTest(c *C, regenMetadata *regeneration.ExternalRegenerationMetadata) {
-	e.UnconditionalLock()
+	e.unconditionalLock()
 	ready := e.setState(StateWaitingToRegenerate, "test")
 	e.Unlock()
 	c.Assert(ready, Equals, true)
