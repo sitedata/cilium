@@ -970,26 +970,72 @@ var (
 		},
 	}
 
+	K8sSecret = map[string]apiextensionsv1beta1.JSONSchemaProps{
+		"namespace": {
+			Description: "Namespace is the k8s namespace in which the secret exists. If " +
+				"namespace is omitted, the namespace of the enclosing rule is assumed.",
+			Type: "string",
+		},
+		"name": {
+			Description: "Name is the name of the k8s secret.",
+			Type:        "string",
+		},
+	}
+
+	TLSContext = map[string]apiextensionsv1beta1.JSONSchemaProps{
+		"certificate": {
+			Description: "Certificate is a chain of certificates presented to the remote party. " +
+				"If specified for an originating TLS context, then this is used as a " +
+				"client certificate.",
+			Type:       "object",
+			Properties: K8sSecret,
+		},
+		"privatekey": {
+			Description: "PrivateKey is the private key used to encrypt the TLS messages. This " +
+				"is the private part of the public/private key pair, corresponding to " +
+				"the public key in the certificate.",
+			Type:       "object",
+			Properties: K8sSecret,
+		},
+		"trustedca": {
+			Description: "TrustedCA is a set of trusted certificate authorities used to verify " +
+				"the certificate of the remote party. If specified for a terminating " +
+				"TLS context, then a client certificate is required.",
+			Type:       "object",
+			Properties: K8sSecret,
+		},
+	}
+
 	PortRule = apiextensionsv1beta1.JSONSchemaProps{
 		Description: "PortRule is a list of ports/protocol combinations with optional Layer 7 " +
 			"rules which must be met.",
 		Properties: map[string]apiextensionsv1beta1.JSONSchemaProps{
 			"ports": {
-				Description: "Ports is a list of L4 port/protocol\n\nIf omitted or empty but " +
-					"RedirectPort is set, then all ports of the endpoint subject to either the " +
-					"ingress or egress rule are being redirected.",
-				Type: "array",
+				Description: "Ports is a list of L4 port/protocol.",
+				Type:        "array",
 				Items: &apiextensionsv1beta1.JSONSchemaPropsOrArray{
 					Schema: &PortProtocol,
 				},
 			},
-			"redirectPort": {
-				Description: "RedirectPort is the L4 port which, if set, all traffic matching " +
-					"the Ports is being redirected to. Whatever listener behind that port " +
-					"becomes responsible to enforce the port rules and is also responsible to " +
-					"reinject all traffic back and ensure it reaches its original destination.",
-				Type:   "integer",
-				Format: "uint16",
+			"terminatingtls": {
+				Description: "TerminatingTLS is the TLS context for the connection terminated by " +
+					"the L7 proxy.  For egress policy this specifies the server-side TLS " +
+					"parameters to be applied on the connections originated from the local " +
+					"POD and terminated by the L7 proxy. For ingress policy this specifies " +
+					"the server-side TLS parameters to be applied on the connections " +
+					"originated from a remote source and terminated by the L7 proxy.",
+				Type:       "object",
+				Properties: TLSContext,
+			},
+			"originatingtls": {
+				Description: "OriginatingTLS is the TLS context for the connections originated by " +
+					"the L7 proxy.  For egress policy this specifies the client-side TLS " +
+					"parameters for the upstream connection originating from the L7 proxy " +
+					"to the remote destination. For ingress policy this specifies the " +
+					"client-side TLS parameters for the connection from the L7 proxy to " +
+					"the local POD.",
+				Type:       "object",
+				Properties: TLSContext,
 			},
 			"rules": L7Rules,
 		},
