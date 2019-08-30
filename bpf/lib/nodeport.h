@@ -622,21 +622,6 @@ static inline int nodeport_lb4(struct __sk_buff *skb, __u32 src_identity)
 			return ret;
 	}
 
-	service_port = bpf_ntohs(key.dport);
-	if (service_port < NODEPORT_PORT_MIN ||
-	    service_port > NODEPORT_PORT_MAX) {
-		if (service_port >= NODEPORT_PORT_MIN_NAT &&
-		    service_port <= NODEPORT_PORT_MAX_NAT) {
-			skb->cb[CB_NAT] = NAT_DIR_INGRESS;
-			skb->cb[CB_SRC_IDENTITY] = src_identity;
-			ep_tail_call(skb, CILIUM_CALL_IPV4_NODEPORT_NAT);
-			return DROP_MISSED_TAIL_CALL;
-		}
-		return TC_ACT_OK;
-	}
-
-	ct_state_new.orig_dport = key.dport;
-
 	if ((svc = lb4_lookup_service_v2(skb, &key)) != NULL) {
 		ret = lb4_local(get_ct_map4(&tuple), skb, l3_off, l4_off, &csum_off,
 				&key, &tuple, svc, &ct_state_new, ip4->saddr);
@@ -645,6 +630,23 @@ static inline int nodeport_lb4(struct __sk_buff *skb, __u32 src_identity)
 	} else {
 		return TC_ACT_OK;
 	}
+
+	if (!svc->is_k8s_external_ip) {
+		service_port = bpf_ntohs(key.dport);
+		if (service_port < NODEPORT_PORT_MIN ||
+		    service_port > NODEPORT_PORT_MAX) {
+			if (service_port >= NODEPORT_PORT_MIN_NAT &&
+			    service_port <= NODEPORT_PORT_MAX_NAT) {
+				skb->cb[CB_NAT] = NAT_DIR_INGRESS;
+				skb->cb[CB_SRC_IDENTITY] = src_identity;
+				ep_tail_call(skb, CILIUM_CALL_IPV4_NODEPORT_NAT);
+				return DROP_MISSED_TAIL_CALL;
+			}
+			return TC_ACT_OK;
+		}
+	}
+
+	ct_state_new.orig_dport = key.dport;
 
 	ret = ct_lookup4(get_ct_map4(&tuple), &tuple, skb, l4_off, CT_EGRESS,
 			 &ct_state, &monitor);
