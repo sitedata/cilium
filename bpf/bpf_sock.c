@@ -224,6 +224,7 @@ int sock4_xlate(struct bpf_sock_addr *ctx)
 			return CONNECT_PROCEED;
 		}
 	}
+	key.address = 0;
 
 	sock4_handle_node_port(ctx, &key);
 
