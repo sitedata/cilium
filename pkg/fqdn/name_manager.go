@@ -23,6 +23,7 @@ import (
 	"github.com/cilium/cilium/pkg/ipcache"
 	"github.com/cilium/cilium/pkg/lock"
 	"github.com/cilium/cilium/pkg/logging/logfields"
+	"github.com/cilium/cilium/pkg/option"
 	"github.com/cilium/cilium/pkg/policy/api"
 
 	"github.com/sirupsen/logrus"
@@ -257,6 +258,21 @@ perDNSName:
 			matches := fqdnRegex.MatchString(dnsName)
 			if matches {
 				affectedSelectors[fqdnSel] = struct{}{}
+				if option.Config.Debug {
+					log.WithFields(logrus.Fields{
+						"selector":      fqdnSel,
+						"selectorRegex": fqdnRegex.String(),
+						"dnsName":       dnsName,
+					}).Debug("selector matched DNSName")
+				}
+			} else {
+				if option.Config.Debug {
+					log.WithFields(logrus.Fields{
+						"selector":      fqdnSel,
+						"selectorRegex": fqdnRegex.String(),
+						"dnsName":       dnsName,
+					}).Debug("selector did not match DNSName")
+				}
 			}
 		}
 	}
